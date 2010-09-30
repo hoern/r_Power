@@ -1,5 +1,6 @@
 ## Interface: 40000
 ## Title: |cFF006699ristretto|r Power
-## Description: Combo, Shard, and Power Display
+## Description: Maelstrom, Combo, Shard, and Power Display
+## SavedVariablesPerCharacter: rPwrConf
 
 core.lua
