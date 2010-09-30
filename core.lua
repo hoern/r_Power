@@ -1,4 +1,4 @@
-pinfo = {
+local pinfo = {
   class = string.upper(select(2, UnitClass('player'))),
 }
 
@@ -24,7 +24,7 @@ end)
 
 function rCPFrame:Init()
 	if pinfo.class == "DRUID" or pinfo.class == "ROGUE" then
-		max_blip = 5
+		local max_blip = 5
 		local red = 1
 		local green = 1
 		local blue = 0
@@ -38,7 +38,7 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "PALADIN" then
-		max_blip = 3
+		local max_blip = 3
 		local red = 0.81
 		local green = 0.04
 		local blue = 0.97
@@ -52,7 +52,7 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "WARLOCK" then
-		max_blip = 3
+		local max_blip = 3
 		local red = 0.81
 		local green = 0.04
 		local blue = 0.97
@@ -67,7 +67,7 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "SHAMAN" then
-		max_blip = 5
+		local max_blip = 5
 		local red = 0
 		local green = 0
 		local blue = 1
@@ -127,7 +127,6 @@ function currMaelstrom()
 	msw = GetSpellInfo(53817)
 	local _, _, _, count, _, _, _, whodunnit = UnitAura("player", msw, nil, "HELPFUL")
 	if count == nil then return 0 end
-	print (whodunnit .. ":" .. count)
 	if whodunnit == "player" then
 		return count
 	end
