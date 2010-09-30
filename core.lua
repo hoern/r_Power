@@ -38,7 +38,6 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "PALADIN" then
-		rpSay("in Paladin")
 		max_blip = 3
 		local red = 0.81
 		local green = 0.04
@@ -68,7 +67,6 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "SHAMAN" then
-		rpSay("in Shaman")
 		max_blip = 5
 		local red = 0
 		local green = 0
@@ -84,7 +82,6 @@ function rCPFrame:Init()
 end
 
 function genFrame(red, green, blue, size)
-	rpSay("In genFrame!")
 	local f = CreateFrame("Frame")
 	f:SetWidth(size)
 	f:SetHeight(size)
@@ -101,7 +98,6 @@ function genFrame(red, green, blue, size)
 end
 
 function makeFrames(num, red, green, blue)
-	rpSay("In makeFrames!")
 	for i = 1, num do
 		_G['powerframe'..i] = genFrame( red, green, blue, 19 )
 		if i == 1 then
@@ -128,7 +124,6 @@ function makeFrames(num, red, green, blue)
 end
 
 function currMaelstrom()
-	rpSay("In Aura")
 	msw = GetSpellInfo(53817)
 	local _, _, _, count, _, _, _, whodunnit = UnitAura("player", msw, nil, "HELPFUL")
 	if count == nil then return 0 end
@@ -151,7 +146,6 @@ function currCP()
 end
 
 function updateVisuals(max, curr, red, green, blue)
-	rpSay("In updateVisuals")
 	for i = 1, max do
 		if i <= curr then
 			_G['powerframe'..i]:SetBackdropColor(red, green, blue,1)
