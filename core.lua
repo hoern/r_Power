@@ -2,6 +2,20 @@ local pinfo = {
   class = string.upper(select(2, UnitClass('player'))),
 }
 
+local reg_bd = {
+		bgFile = [[Interface\ChatFrame\ChatFrameBackground]],
+    edgeFile = [[Interface/Tooltips/UI-Tooltip-Border]],
+    tile = true, tileSize = 4, edgeSize = 4,
+    insets = { left = 1, right = 1, top = 1, bottom = 1 }
+}
+
+local bold_bd = {
+		bgFile = [[Interface\ChatFrame\ChatFrameBackground]],
+    edgeFile = [[Interface/Tooltips/UI-Tooltip-Border]],
+    tile = true, tileSize = 4, edgeSize = 4,
+    insets = { left = 1, right = 1, top = 1, bottom = 1 }
+}
+
 if rPwrConf == nil then
 	rPwrConf = {
 		ato = "CENTER",
@@ -28,12 +42,53 @@ function rCPFrame:Init()
 		local red = 1
 		local green = 1
 		local blue = 0
-		makeFrames(5, red, green, blue)
+
+		makeFrames(max_blip, red, green, blue)
 		updateVisuals(max_blip, currCP(), red, green, blue)
+
 		rCPFrame:RegisterEvent("UNIT_COMBO_POINTS")
 		rCPFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+
+		if pinfo.class == "DRUID" then -- turn display off when not in kitty
+			for i=1, GetNumShapeshiftForms() do
+				local _, name, _, _ = GetShapeshiftFormInfo(i)
+				if name == "Cat Form" then stanceID = i end
+			end
+			druidShowHide(stanceID)
+			rCPFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
+		end
+
+		if pinfo.class == "ROGUE" then
+			if rPwrConf.dpstack == true then -- envenom counter
+				rCPFrame:RegisterEvent("UNIT_AURA")
+			end
+		end
+
 		rCPFrame:SetScript("OnEvent", function(self, event, unit)
+
+			if pinfo.class == "DRUID" and event == "UPDATE_SHAPESHIFT_FORM" then
+				druidShowHide(stanceID)
+				return true
+			end
+
+			if pinfo.class == "ROGUE" and event == "UNIT_AURA" then
+				if rPwrConf.dpstack == true and unit == "target" then
+					count = currDP()
+					for i = 1, 5 do
+						if i <= count then
+							_G["powerframe"..i]:SetBackdrop(bold_bd)
+							_G["powerframe"..i]:SetBackdropBorderColor(0,1,0,1) -- green
+						else
+							_G["powerframe"..i]:SetBackdrop(reg_bd)
+							_G["powerframe"..i]:SetBackdropBorderColor(0,0,0,1) -- black
+						end
+					end
+				end
+			end
+
 			updateVisuals(max_blip, currCP(), red, green, blue)
+			druidShowHide(stanceID)
+
 		end)
 	end
 
@@ -81,16 +136,23 @@ function rCPFrame:Init()
 	end
 end
 
+function druidShowHide(id)
+	if pinfo.class == "DRUID" and GetShapeshiftForm() ~= id and currCP() == 0 then
+		for i = 1, 5 do
+			_G['powerframe'..i]:Hide()
+		end
+	else
+		for i = 1, 5 do
+			_G['powerframe'..i]:Show()
+		end
+	end
+end
+
 function genFrame(red, green, blue, size)
 	local f = CreateFrame("Frame")
 	f:SetWidth(size)
 	f:SetHeight(size)
-	f:SetBackdrop({
-		bgFile = [[Interface\ChatFrame\ChatFrameBackground]],
-    edgeFile = [[Interface/Tooltips/UI-Tooltip-Border]],
-    tile = true, tileSize = 4, edgeSize = 4,
-    insets = { left = 1, right = 1, top = 1, bottom = 1 }
-	})
+	f:SetBackdrop(reg_bd)
 	f:SetBackdropColor(red,green,blue,0.5)
 	f:SetBackdropBorderColor(0,0,0,1)
 	f:Show()
@@ -123,8 +185,15 @@ function makeFrames(num, red, green, blue)
 	end
 end
 
+function currDP()
+	local dp = GetSpellInfo(72330)
+	local _, _, _, count, _, _, _, whodunnit = UnitAura("target", dp, nil, "HARMFUL")
+	if count == nil then return 0 end
+	return count
+end
+
 function currMaelstrom()
-	msw = GetSpellInfo(53817)
+	local msw = GetSpellInfo(53817)
 	local _, _, _, count, _, _, _, whodunnit = UnitAura("player", msw, nil, "HELPFUL")
 	if count == nil then return 0 end
 	if whodunnit == "player" then
@@ -166,6 +235,17 @@ SlashCmdList["RP"] = function(str)
 		for i=1, max_blip do
 			rPwrConf.scale = msg
 			_G['powerframe'..i]:SetScale(msg)
+		end
+	elseif cmd == "dpstack" then
+		if rPwrConf.dpstack == nil or rPwrConf.dpstack == false then
+			rPwrConf.dpstack = true
+			rCPFrame:RegisterEvent("UNIT_AURA")
+		else
+			rPwrConf.dpstack = false
+			for i = 1, 5 do
+				_G["powerframe"..i]:SetBackdropBorderColor(0,0,0,1) -- black
+		end
+			rCPFrame:UnregisterEvent("UNIT_AURA")
 		end
 	end
 end
