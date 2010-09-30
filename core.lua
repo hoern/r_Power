@@ -73,22 +73,14 @@ function rCPFrame:Init()
 
 			if pinfo.class == "ROGUE" and event == "UNIT_AURA" then
 				if rPwrConf.dpstack == true and unit == "target" then
-					count = currDP()
-					for i = 1, 5 do
-						if i <= count then
-							_G["powerframe"..i]:SetBackdrop(bold_bd)
-							_G["powerframe"..i]:SetBackdropBorderColor(0,1,0,1) -- green
-						else
-							_G["powerframe"..i]:SetBackdrop(reg_bd)
-							_G["powerframe"..i]:SetBackdropBorderColor(0,0,0,1) -- black
-						end
-					end
+					local count = currDP()
+					updateBorder(5, count, 0, 0, 0, 0, 1, 0)
 				end
 			end
-
 			updateVisuals(max_blip, currCP(), red, green, blue)
+			local count = currDP()
+			updateBorder(5, count, 0, 0, 0, 0, 1, 0)
 			druidShowHide(stanceID)
-
 		end)
 	end
 
@@ -219,6 +211,16 @@ function updateVisuals(max, curr, red, green, blue)
 			_G['powerframe'..i]:SetBackdropColor(red, green, blue,1)
 		else
 			_G['powerframe'..i]:SetBackdropColor(red, green, blue,0.1)
+		end
+	end
+end
+
+function updateBorder(max, curr, red, green, blue, redset, greenset, blueset)
+	for i = 1, max do
+		if i <= curr then
+			_G['powerframe'..i]:SetBackdropBorderColor(redset, greenset, blueset, 1)
+		else
+			_G['powerframe'..i]:SetBackdropBorderColor(red, green, blue, 1)
 		end
 	end
 end
