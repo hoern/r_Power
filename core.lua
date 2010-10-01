@@ -2,6 +2,14 @@ local pinfo = {
   class = string.upper(select(2, UnitClass('player'))),
 }
 
+local default_color = {
+	["SHAMAN"]  = { 0, 0, 1 },
+	["PALADIN"] = { 0.81, 0.04, 0.97 },
+	["DRUID"]   = { 1, 1, 0 },
+	["ROGUE"]   = { 1, 1, 0 },
+	["WARLOCK"] = { 0.81, 0.04, 0.97 },
+}
+
 local reg_bd = {
 		bgFile = [[Interface\ChatFrame\ChatFrameBackground]],
     edgeFile = [[Interface/Tooltips/UI-Tooltip-Border]],
@@ -22,9 +30,13 @@ if rPwrConf == nil then
 		x   = 0,
 		y   = 0,
 		scale = 1,
-		enabled = true
+		enabled = true,
+		mycolors = nil,
 	}
 end
+
+local max_blip
+local red, green, blue, mred, mgreen, mblue
 
 rCPFrame = CreateFrame("Frame", "rCPFrame")
 rCPFrame:RegisterEvent("VARIABLES_LOADED")
@@ -37,11 +49,15 @@ rCPFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 function rCPFrame:Init()
+	if rPwrConf.mycolors then
+		mred, mgreen, mblue = unpack(rPwrConf.mycolors)
+	end
+
 	if pinfo.class == "DRUID" or pinfo.class == "ROGUE" then
-		local max_blip = 5
-		local red = 1
-		local green = 1
-		local blue = 0
+		max_blip = 5
+	  red = mred or 1
+	  green = mgreen or 1
+	  blue = mblue or 0
 
 		makeFrames(max_blip, red, green, blue)
 		updateVisuals(max_blip, currCP(), red, green, blue)
@@ -85,10 +101,11 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "PALADIN" then
-		local max_blip = 3
-		local red = 0.81
-		local green = 0.04
-		local blue = 0.97
+		max_blip = 3
+		red = mred or 0.81
+		green = mgreen or 0.04
+		blue = mblue or 0.97
+
 		makeFrames(3, red, green, blue)
 		updateVisuals(max_blip, currHolyPower(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_POWER")
@@ -99,10 +116,11 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "WARLOCK" then
-		local max_blip = 3
-		local red = 0.81
-		local green = 0.04
-		local blue = 0.97
+		max_blip = 3
+		red = mred or 0.81
+		green = mgreen or 0.04
+		blue = mblue or 0.97
+
 		makeFrames(3, red, green, blue)
 		updateVisuals(max_blip, currShards(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_POWER")
@@ -114,10 +132,11 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "SHAMAN" then
-		local max_blip = 5
-		local red = 0
-		local green = 0
-		local blue = 1
+		max_blip = 5
+		red = mred or 0
+		green = mgreen or 0
+		blue = mblue or 1
+
 		makeFrames(5, red, green, blue)
 		updateVisuals(max_blip, currMaelstrom(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_AURA")
@@ -225,6 +244,25 @@ function updateBorder(max, curr, red, green, blue, redset, greenset, blueset)
 	end
 end
 
+function ShowColorPicker(r, g, b, cback)
+ ColorPickerFrame:SetColorRGB(r,g,b);
+ ColorPickerFrame.previousValues = {r,g,b};
+ ColorPickerFrame.func, ColorPickerFrame.opacityFunc, ColorPickerFrame.cancelFunc = cback, cback, cback;
+ ColorPickerFrame:Hide();
+ ColorPickerFrame:Show();
+end
+
+function colorCallback(bail)
+	local nr, ng, nb
+	if bail then
+		red, green, blue = unpack(bail)
+	else
+		red, green, blue = ColorPickerFrame:GetColorRGB();
+	end
+	updateVisuals(max_blip, max_blip, red, green, blue)
+	rPwrConf.mycolors = { red, green, blue }
+end
+
 SLASH_RP1 = "/rp"
 SlashCmdList["RP"] = function(str)
 	local switch, message = str:match("^(%S*)%s*(.-)$");
@@ -248,6 +286,13 @@ SlashCmdList["RP"] = function(str)
 				_G["powerframe"..i]:SetBackdropBorderColor(0,0,0,1) -- black
 		end
 			rCPFrame:UnregisterEvent("UNIT_AURA")
+		end
+	elseif cmd == "color" then
+		if msg == "set" then
+			ShowColorPicker(red, green, blue, colorCallback)
+		elseif msg == "reset" then
+			red, green, blue = unpack(default_color[pinfo.class])
+			ShowColorPicker(red, green, blue, colorCallback)
 		end
 	end
 end
