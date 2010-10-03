@@ -2,6 +2,14 @@ local pinfo = {
   class = string.upper(select(2, UnitClass('player'))),
 }
 
+local __, _, _, tocversion = GetBuildInfo()
+
+if tocversion <= 40000 then
+	its_cataclysm_already = true
+else
+	its_cataclysm_already = false
+end
+
 local default_color = {
 	["SHAMAN"]  = { 0, 0, 1 },
 	["PALADIN"] = { 0.81, 0.04, 0.97 },
@@ -74,7 +82,7 @@ function rCPFrame:Init()
 			rCPFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 		end
 
-		if pinfo.class == "ROGUE" then
+		if pinfo.class == "ROGUE" and its_cataclysm_already then
 			if rPwrConf.dpstack == true then -- envenom counter
 				rCPFrame:RegisterEvent("UNIT_AURA")
 			end
@@ -100,7 +108,7 @@ function rCPFrame:Init()
 		end)
 	end
 
-	if pinfo.class == "PALADIN" then
+	if pinfo.class == "PALADIN" and its_cataclysm_already then
 		max_blip = 3
 		red = mred or 0.81
 		green = mgreen or 0.04
@@ -115,7 +123,7 @@ function rCPFrame:Init()
 		end)
 	end
 
-	if pinfo.class == "WARLOCK" then
+	if pinfo.class == "WARLOCK" and its_cataclysm_already then
 		max_blip = 3
 		red = mred or 0.81
 		green = mgreen or 0.04
