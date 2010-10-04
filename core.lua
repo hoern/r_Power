@@ -2,6 +2,14 @@ local pinfo = {
   class = string.upper(select(2, UnitClass('player'))),
 }
 
+if pinfo.class == "DRUID" then
+	local stanceID = 0
+	for i=1, GetNumShapeshiftForms() do
+		local _, name, _, _ = GetShapeshiftFormInfo(i)
+		if name == "Cat Form" then stanceID = i end
+	end
+end
+
 local __, _, _, tocversion = GetBuildInfo()
 
 if tocversion <= 40000 then
@@ -74,10 +82,6 @@ function rCPFrame:Init()
 		rCPFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 
 		if pinfo.class == "DRUID" then -- turn display off when not in kitty
-			for i=1, GetNumShapeshiftForms() do
-				local _, name, _, _ = GetShapeshiftFormInfo(i)
-				if name == "Cat Form" then stanceID = i end
-			end
 			druidShowHide(stanceID)
 			rCPFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 		end
@@ -239,6 +243,7 @@ function updateVisuals(max, curr, red, green, blue)
 		else
 			_G['powerframe'..i]:SetBackdropColor(red, green, blue,0.1)
 		end
+
 	end
 end
 
