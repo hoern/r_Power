@@ -93,7 +93,6 @@ function rCPFrame:Init()
 
 			if pinfo.class == "DRUID" and event == "UPDATE_SHAPESHIFT_FORM" then
 				druidShowHide(stanceID)
-				return true
 			end
 
 			if pinfo.class == "ROGUE" and event == "UNIT_AURA" then
@@ -173,6 +172,7 @@ function rCPFrame:Init()
 				if GetPrimaryTalentTree() == 3 then
 					rCPFrame:RegisterEvent("UNIT_AURA")
 					priestShowHide(true)
+					updateVisuals(max_blip, currOrbs(), red, gree, blue)
 				else
 					rCPFrame:UnregisterEvent("UNIT_AURA")
 					priestShowHide(false)
