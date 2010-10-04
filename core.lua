@@ -10,13 +10,31 @@ else
 	its_cataclysm_already = false
 end
 
-local default_color = {
-	["SHAMAN"]  = { 0, 0, 1 },
-	["PALADIN"] = { 0.81, 0.04, 0.97 },
-	["DRUID"]   = { 1, 1, 0 },
-	["ROGUE"]   = { 1, 1, 0 },
-	["WARLOCK"] = { 0.81, 0.04, 0.97 },
-	["PRIEST"] = { 0.8, 0.4, 0.8 }
+local defaults = {
+	["SHAMAN"]  = {
+		colors = { 0, 0, 1 },
+		blips = 5,
+	},
+	["PALADIN"] = {
+		colors = { 0.81, 0.04, 0.97 },
+		blips = 3,
+	},
+	["DRUID"] = {
+		colors = { 1, 1, 0 },
+		blips  = 5,
+	},
+	["ROGUE"] = {
+		colors = { 1, 1, 0 },
+		blips = 3,
+	},
+	["WARLOCK"] = {
+		colors = { 0.81, 0.04, 0.97 },
+		blips = 3,
+	},
+	["PRIEST"] = {
+		colors = { 0.8, 0.4, 0.8 },
+		blips = 3,
+	},
 }
 
 local reg_bd = {
@@ -57,17 +75,29 @@ rCPFrame:SetScript("OnEvent", function(self, event, ...)
 	end
 end)
 
-function rCPFrame:Init()
+function initClass()
 	if rPwrConf.mycolors then
-		mred, mgreen, mblue = unpack(rPwrConf.mycolors)
+		red, green, blue = unpack(rPwrConf.mycolors)
+	else
+		red, green, blue = unpack(default_color[pinfo.class])
 	end
+	return maxb_blip, red, green, blue
+end
+
+function initClass()
+	if rPwrConf.mycolors then
+		local red, green, blue = unpack(rPwrConf.mycolors)
+	else
+		local ed, green, blue = unpack(defaults[pinfo.class]["colors"])
+	end
+	local blips = defaults[pinfo.class]["blips"]
+	return blips, red, green, blue
+end
+
+function rCPFrame:Init()
+	max_blip, red, green, blue = initClass()
 
 	if pinfo.class == "DRUID" or pinfo.class == "ROGUE" then
-		max_blip = 5
-	  red = mred or 1
-	  green = mgreen or 1
-	  blue = mblue or 0
-
 		makeFrames(max_blip, red, green, blue)
 		updateVisuals(max_blip, currCP(), red, green, blue)
 
@@ -109,10 +139,7 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "PALADIN" and its_cataclysm_already then
-		max_blip = 3
-		red = mred or 0.81
-		green = mgreen or 0.04
-		blue = mblue or 0.97
+		max_blip, red, green, blue = initClass()
 
 		makeFrames(3, red, green, blue)
 		updateVisuals(max_blip, currHolyPower(), red, green, blue)
@@ -124,10 +151,7 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "WARLOCK" and its_cataclysm_already then
-		max_blip = 3
-		red = mred or 0.81
-		green = mgreen or 0.04
-		blue = mblue or 0.97
+		max_blip, red, green, blue = initClass()
 
 		makeFrames(3, red, green, blue)
 		updateVisuals(max_blip, currShards(), red, green, blue)
@@ -140,10 +164,7 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "SHAMAN" then
-		max_blip = 5
-		red = mred or 0
-		green = mgreen or 0
-		blue = mblue or 1
+		max_blip, red, green, blue = initClass()
 
 		makeFrames(5, red, green, blue)
 		updateVisuals(max_blip, currMaelstrom(), red, green, blue)
@@ -155,10 +176,7 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "PRIEST" and its_cataclysm_already and GetPrimaryTalentTree() == 3 then
-		max_blip = 3
-		red = mred or 0.4
-		green = mgreen or 0
-		blue = mblue or 0.4
+		max_blip, red, green, blue = initClass()
 
 		makeFrames(3, red, green, blue)
 		updateVisuals(max_blip, currOrbs(), red, green, blue)
@@ -348,8 +366,16 @@ SlashCmdList["RP"] = function(str)
 		if msg == "set" then
 			ShowColorPicker(red, green, blue, colorCallback)
 		elseif msg == "reset" then
-			red, green, blue = unpack(default_color[pinfo.class])
+			red, green, blue = unpack(default_color[pinfo.class]["colors"])
 			ShowColorPicker(red, green, blue, colorCallback)
 		end
-	end
+	else
+		print("|cFF006699ristretto|r Power")
+		print("by Hoern, Nesingwary <hoern@d8c.us>")
+		print("Usage:")
+		print("/rp scale x|dpstack|color (set|reset)")
+		print("dpstack: turn deadly poison stacks on/off")
+		print("scale 0-5: grow/shrink blips")
+		print("color set: pick a color, any color")
+		print("color reset: ugh, that pink is hideous")
 end
