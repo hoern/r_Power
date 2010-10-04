@@ -2,14 +2,6 @@ local pinfo = {
   class = string.upper(select(2, UnitClass('player'))),
 }
 
-if pinfo.class == "DRUID" then
-	local stanceID = 0
-	for i=1, GetNumShapeshiftForms() do
-		local _, name, _, _ = GetShapeshiftFormInfo(i)
-		if name == "Cat Form" then stanceID = i end
-	end
-end
-
 local __, _, _, tocversion = GetBuildInfo()
 
 if tocversion <= 40000 then
@@ -52,7 +44,7 @@ if rPwrConf == nil then
 	}
 end
 
-local max_blip
+local max_blip, stanceID
 local red, green, blue, mred, mgreen, mblue
 
 rCPFrame = CreateFrame("Frame", "rCPFrame")
@@ -71,7 +63,6 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "DRUID" or pinfo.class == "ROGUE" then
-		local stanceID
 		max_blip = 5
 	  red = mred or 1
 	  green = mgreen or 1
@@ -84,6 +75,10 @@ function rCPFrame:Init()
 		rCPFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 
 		if pinfo.class == "DRUID" then -- turn display off when not in kitty
+			for i=1, GetNumShapeshiftForms() do
+				local _, name, _, _ = GetShapeshiftFormInfo(i)
+				if name == "Cat Form" then stanceID = i end
+			end
 			druidShowHide(stanceID)
 			rCPFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 		end
@@ -178,6 +173,7 @@ function rCPFrame:Init()
 end
 
 function druidShowHide(id)
+	print(id, GetShapeshiftForm())
 	if pinfo.class == "DRUID" and GetShapeshiftForm() ~= id and currCP() == 0 then
 		for i = 1, 5 do
 			_G['powerframe'..i]:Hide()
