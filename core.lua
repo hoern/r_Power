@@ -24,6 +24,7 @@ local default_color = {
 	["DRUID"]   = { 1, 1, 0 },
 	["ROGUE"]   = { 1, 1, 0 },
 	["WARLOCK"] = { 0.81, 0.04, 0.97 },
+	["PRIEST"] = { 0.8, 0.4, 0.8 }
 }
 
 local reg_bd = {
@@ -70,6 +71,7 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "DRUID" or pinfo.class == "ROGUE" then
+		local stanceID
 		max_blip = 5
 	  red = mred or 1
 	  green = mgreen or 1
@@ -152,11 +154,27 @@ function rCPFrame:Init()
 		makeFrames(5, red, green, blue)
 		updateVisuals(max_blip, currMaelstrom(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_AURA")
-		rCPFrame:SetScript("OnEvent", function(self, event, unit, power)
+		rCPFrame:SetScript("OnEvent", function(self, event, unit)
 			if unit ~= "player" then return end
 			updateVisuals(max_blip, currMaelstrom(), red, green, blue)
 		end)
 	end
+
+	if pinfo.class == "PRIEST" and GetPrimaryTalentTree() == 3 then
+		max_blip = 3
+		red = mred or 0.4
+		green = mgreen or 0
+		blue = mblue or 0.4
+
+		makeFrames(3, red, green, blue)
+		updateVisuals(max_blip, currOrbs(), red, green, blue)
+		rCPFrame:RegisterEvent("UNIT_AURA")
+		rCPFrame:SetScript("OnEvent", function(self, event, unit)
+			if unit ~= "player" then return end
+			updateVisuals(max_blip, currOrbs(), red, green, blue)
+		end)
+	end
+
 end
 
 function druidShowHide(id)
@@ -222,6 +240,13 @@ function currMaelstrom()
 	if whodunnit == "player" then
 		return count
 	end
+end
+
+function currOrbs()
+	local orb = GetSpellInfo(77487)
+	local _, _, _, count, _, _, _, whodunnit = UnitAura("player", orb, nil, "HELPFUL")
+	if count == nil then return 0 end
+	return count
 end
 
 function currShards()
