@@ -155,7 +155,7 @@ function rCPFrame:Init()
 		end)
 	end
 
-	if pinfo.class == "PRIEST" and GetPrimaryTalentTree() == 3 then
+	if pinfo.class == "PRIEST" and its_cataclysm_already and GetPrimaryTalentTree() == 3 then
 		max_blip = 3
 		red = mred or 0.4
 		green = mgreen or 0
@@ -164,24 +164,21 @@ function rCPFrame:Init()
 		makeFrames(3, red, green, blue)
 		updateVisuals(max_blip, currOrbs(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_AURA")
+		rCPFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
 		rCPFrame:SetScript("OnEvent", function(self, event, unit)
-			if unit ~= "player" then return end
-			updateVisuals(max_blip, currOrbs(), red, green, blue)
+			if event == "UNIT_AURA" then
+				if unit ~= "player" then return end
+				updateVisuals(max_blip, currOrbs(), red, green, blue)
+			elseif event == "ACTIVE_TALENT_GROUP_CHANGED" then
+				if GetPrimaryTalentTree() == 3 then
+					rCPFrame:RegisterEvent("UNIT_AURA")
+					priestShowHide(true)
+				else
+					rCPFrame:UnregisterEvent("UNIT_AURA")
+					priestShowHide(false)
+				end
+			end
 		end)
-	end
-
-end
-
-function druidShowHide(id)
-	print(id, GetShapeshiftForm())
-	if pinfo.class == "DRUID" and GetShapeshiftForm() ~= id and currCP() == 0 then
-		for i = 1, 5 do
-			_G['powerframe'..i]:Hide()
-		end
-	else
-		for i = 1, 5 do
-			_G['powerframe'..i]:Show()
-		end
 	end
 end
 
@@ -218,6 +215,32 @@ function makeFrames(num, red, green, blue)
 		else
 			_G['powerframe'..i]:SetPoint("TOPLEFT", _G['powerframe'..i-1], "TOPRIGHT", 4, 0)
 			_G['powerframe'..i]:SetScale(rPwrConf.scale)
+		end
+	end
+end
+
+function druidShowHide(id)
+	if pinfo.class == "DRUID" and GetShapeshiftForm() ~= id and currCP() == 0 then
+		for i = 1, 5 do
+			rCPFrame:UnregisterEvent("UNIT_AURA")
+			_G['powerframe'..i]:Hide()
+		end
+	else
+		for i = 1, 5 do
+			rCPFrame:RegisterEvent("UNIT_AURA")
+			_G['powerframe'..i]:Show()
+		end
+	end
+end
+
+function priestShowHide(show)
+	if show then
+		for i = 1, 3 do
+			_G['powerframe'..i]:Show()
+		end
+	else
+		for i = 1, 3 do
+			_G['powerframe'..i]:Hide()
 		end
 	end
 end
