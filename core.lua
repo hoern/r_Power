@@ -63,6 +63,7 @@ if rPwrConf == nil then
 end
 
 local max_blip, red, green, blue, catStance
+local cfg_size = 19
 
 rCPFrame = CreateFrame("Frame", "rCPFrame")
 rCPFrame:RegisterEvent("VARIABLES_LOADED")
@@ -78,7 +79,7 @@ function rCPFrame:Init()
 	max_blip, red, green, blue = initClass()
 
 	if pinfo.class == "DRUID" or pinfo.class == "ROGUE" then
-		makeFrames(max_blip, red, green, blue)
+		makeFrames(max_blip, red, green, blue, false)
 		updateVisuals(max_blip, currCP(), red, green, blue)
 
 		rCPFrame:RegisterEvent("UNIT_COMBO_POINTS")
@@ -117,7 +118,7 @@ function rCPFrame:Init()
 	if pinfo.class == "PALADIN" and its_cataclysm_already then
 		max_blip, red, green, blue = initClass()
 
-		makeFrames(3, red, green, blue)
+		makeFrames(max_blip, red, green, blue, false)
 		updateVisuals(max_blip, currHolyPower(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_POWER")
 		rCPFrame:SetScript("OnEvent", function(self, event, unit, power)
@@ -129,32 +130,66 @@ function rCPFrame:Init()
 	if pinfo.class == "WARLOCK" and its_cataclysm_already then
 		max_blip, red, green, blue = initClass()
 
-		makeFrames(3, red, green, blue)
+		makeFrames(max_blip, red, green, blue, false)
 		updateVisuals(max_blip, currShards(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_POWER")
 		rCPFrame:SetScript("OnEvent", function(self, event, unit, power)
 			if unit ~= "player" or power ~= "SOUL_SHARDS" then return end
-			local shards = currShards()
-			updateVisuals(max_blip, shards, red, green, blue)
+			updateVisuals(max_blip, currShards(), red, green, blue)
 		end)
 	end
 
 	if pinfo.class == "SHAMAN" then
+	  rCPFrame.spec = GetPrimaryTalentTree()
 		max_blip, red, green, blue = initClass()
 
-		makeFrames(5, red, green, blue)
-		updateVisuals(max_blip, currMaelstrom(), red, green, blue)
-		rCPFrame:RegisterEvent("UNIT_AURA")
+    if rCPFrame.spec == 2 then
+      cFunc = currMaelstrom
+		  rCPFrame:RegisterEvent("UNIT_AURA")
+		elseif rCPFrame.spec == 1 then
+		  rCPFrame:RegisterEvent("UNIT_AURA")
+		  cFunc = currLB
+		  max_blip = 6
+		end
+
+    rCPFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+
+		makeFrames(6, red, green, blue, true)
+		shamanHideShow(rCPFrame.spec)
+		updateVisuals(max_blip, cFunc(), red, green, blue)
+		
 		rCPFrame:SetScript("OnEvent", function(self, event, unit)
-			if unit ~= "player" then return end
-			updateVisuals(max_blip, currMaelstrom(), red, green, blue)
+			if event == "ACTIVE_TALENT_GROUP_CHANGED" then
+			  rCPFrame.spec = GetPrimaryTalentTree()
+			  if rCPFrame.spec == 2 then
+			    rCPFrame:RegisterEvent("UNIT_AURA")
+			    cFunc = currMaelstrom
+			    max_blip = 5
+			    shamanHideShow(rCPFrame.spec)
+				  updateVisuals(max_blip, cFunc(), red, green, blue)
+        elseif rCPFrame.spec == 1 then
+			    rCPFrame:RegisterEvent("UNIT_AURA")
+			    cFunc = currLB
+			    max_blip = 6
+			    shamanHideShow(rCPFrame.spec)
+				  updateVisuals(max_blip, cFunc(), red, green, blue)			    
+			  else
+			    rCPFrame:UnregisterEvent("UNIT_AURA")
+			    for i = 1, max_blip do
+			      _G['powerframe'..i]:Hide()
+			    end
+			  end
+		  else
+		    if unit ~= "player" then return end
+			  updateVisuals(max_blip, cFunc(), red, green, blue)
+			end
 		end)
 	end
 
 	if pinfo.class == "PRIEST" and its_cataclysm_already and GetPrimaryTalentTree() == 3 then
 		max_blip, red, green, blue = initClass()
 
-		makeFrames(3, red, green, blue)
+		makeFrames(max_blip, red, green, blue, false)
 		updateVisuals(max_blip, currOrbs(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_AURA")
 		rCPFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
@@ -176,10 +211,10 @@ function rCPFrame:Init()
 	end
 end
 
-function genFrame(red, green, blue, size)
+function genFrame(red, green, blue, height, width)
 	local f = CreateFrame("Frame")
-	f:SetWidth(size)
-	f:SetHeight(size)
+	f:SetWidth(width)
+	f:SetHeight(height)
 	f:SetBackdrop(reg_bd)
 	f:SetBackdropColor(red,green,blue,0.5)
 	f:SetBackdropBorderColor(0,0,0,1)
@@ -187,9 +222,13 @@ function genFrame(red, green, blue, size)
 	return f
 end
 
-function makeFrames(num, red, green, blue)
+function makeFrames(num, red, green, blue, stretch)
+  local mult = 1
+  if stretch then 
+    mult = 5 / num
+  end
 	for i = 1, num do
-		_G['powerframe'..i] = genFrame( red, green, blue, 19 )
+		_G['powerframe'..i] = genFrame(red, green, blue, cfg_size, cfg_size * mult)
 		if i == 1 then
 			local gb = _G['powerframe1']
 			gb:SetPoint(rPwrConf.ato, UIParent, rPwrConf.ato, rPwrConf.x, rPwrConf.y)
@@ -207,7 +246,7 @@ function makeFrames(num, red, green, blue)
 			end)
 			gb:SetScale(rPwrConf.scale)
 		else
-			_G['powerframe'..i]:SetPoint("TOPLEFT", _G['powerframe'..i-1], "TOPRIGHT", 4, 0)
+			_G['powerframe'..i]:SetPoint("TOPLEFT", _G['powerframe'..i-1], "TOPRIGHT", 1, 0)
 			_G['powerframe'..i]:SetScale(rPwrConf.scale)
 		end
 	end
@@ -258,6 +297,28 @@ function priestShowHide(show)
 			_G['powerframe'..i]:Hide()
 		end
 	end
+end
+
+function shamanHideShow(spec)
+  if spec == 1 then
+    for i = 1,6 do
+      _G['powerframe'..i]:SetWidth(cfg_size * (5/6))
+    end
+    _G['powerframe6']:Show()
+  else
+    for i = 1,5 do
+      _G['powerframe'..i]:SetWidth(cfg_size)
+    end
+    _G['powerframe6']:Hide()
+  end
+end
+
+function currLB()
+	local lb = GetSpellInfo(324)
+	local _, _, _, count, _, _, _, whodunnit = UnitAura("player", lb, nil, "HELPFUL")
+	if count == nil then return 0 end
+	if count < 3 then return 0 end
+	return count - 3
 end
 
 function currDP()
