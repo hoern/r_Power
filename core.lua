@@ -4,7 +4,7 @@ local pinfo = {
 
 local __, _, _, tocversion = GetBuildInfo()
 
-if tocversion <= 40000 then
+if tocversion >= 40000 then
 	its_cataclysm_already = true
 else
 	its_cataclysm_already = false
@@ -25,7 +25,7 @@ local defaults = {
 	},
 	["ROGUE"] = {
 		colors = { 1, 1, 0 },
-		blips = 3,
+		blips = 5,
 	},
 	["WARLOCK"] = {
 		colors = { 0.81, 0.04, 0.97 },
@@ -62,8 +62,7 @@ if rPwrConf == nil then
 	}
 end
 
-local max_blip, stanceID
-local red, green, blue, mred, mgreen, mblue
+local max_blip, red, green, blue, catStance
 
 rCPFrame = CreateFrame("Frame", "rCPFrame")
 rCPFrame:RegisterEvent("VARIABLES_LOADED")
@@ -74,25 +73,6 @@ rCPFrame:SetScript("OnEvent", function(self, event, ...)
 		self:Init()
 	end
 end)
-
-function initClass()
-	if rPwrConf.mycolors then
-		red, green, blue = unpack(rPwrConf.mycolors)
-	else
-		red, green, blue = unpack(default_color[pinfo.class])
-	end
-	return maxb_blip, red, green, blue
-end
-
-function initClass()
-	if rPwrConf.mycolors then
-		local red, green, blue = unpack(rPwrConf.mycolors)
-	else
-		local ed, green, blue = unpack(defaults[pinfo.class]["colors"])
-	end
-	local blips = defaults[pinfo.class]["blips"]
-	return blips, red, green, blue
-end
 
 function rCPFrame:Init()
 	max_blip, red, green, blue = initClass()
@@ -105,11 +85,7 @@ function rCPFrame:Init()
 		rCPFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 
 		if pinfo.class == "DRUID" then -- turn display off when not in kitty
-			for i=1, GetNumShapeshiftForms() do
-				local _, name, _, _ = GetShapeshiftFormInfo(i)
-				if name == "Cat Form" then stanceID = i end
-			end
-			druidShowHide(stanceID)
+			druidShowHide()
 			rCPFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 		end
 
@@ -122,7 +98,7 @@ function rCPFrame:Init()
 		rCPFrame:SetScript("OnEvent", function(self, event, unit)
 
 			if pinfo.class == "DRUID" and event == "UPDATE_SHAPESHIFT_FORM" then
-				druidShowHide(stanceID)
+				druidShowHide()
 			end
 
 			if pinfo.class == "ROGUE" and event == "UNIT_AURA" then
@@ -134,7 +110,7 @@ function rCPFrame:Init()
 			updateVisuals(max_blip, currCP(), red, green, blue)
 			local count = currDP()
 			updateBorder(5, count, 0, 0, 0, 0, 1, 0)
-			druidShowHide(stanceID)
+			druidShowHide()
 		end)
 	end
 
@@ -237,8 +213,29 @@ function makeFrames(num, red, green, blue)
 	end
 end
 
-function druidShowHide(id)
-	if pinfo.class == "DRUID" and GetShapeshiftForm() ~= id and currCP() == 0 then
+function initClass()
+	local red, green, blue
+	if rPwrConf.mycolors then
+		red, green, blue = unpack(rPwrConf.mycolors)
+	else
+		red, green, blue = unpack(defaults[pinfo.class]["colors"])
+	end
+	local blips = defaults[pinfo.class]["blips"]
+	return blips, red, green, blue
+end
+
+local function kittyStance()
+	local sid = 0
+	local cat = GetSpellInfo(768)
+	for i=1, GetNumShapeshiftForms() do
+		local _, name, _, _ = GetShapeshiftFormInfo(i)
+		if name == cat then sid = i end
+	end
+	return sid
+end
+
+function druidShowHide()
+	if pinfo.class == "DRUID" and GetShapeshiftForm() ~= kittyStance() and currCP() == 0 then
 		for i = 1, 5 do
 			rCPFrame:UnregisterEvent("UNIT_AURA")
 			_G['powerframe'..i]:Hide()
@@ -366,16 +363,17 @@ SlashCmdList["RP"] = function(str)
 		if msg == "set" then
 			ShowColorPicker(red, green, blue, colorCallback)
 		elseif msg == "reset" then
-			red, green, blue = unpack(default_color[pinfo.class]["colors"])
+			red, green, blue = unpack(defaults[pinfo.class]["colors"])
 			ShowColorPicker(red, green, blue, colorCallback)
 		end
 	else
 		print("|cFF006699ristretto|r Power")
 		print("by Hoern, Nesingwary <hoern@d8c.us>")
 		print("Usage:")
-		print("/rp scale x|dpstack|color (set|reset)")
+		print("/rp scale x||dpstack||color (set||reset)")
 		print("dpstack: turn deadly poison stacks on/off")
 		print("scale 0-5: grow/shrink blips")
 		print("color set: pick a color, any color")
 		print("color reset: ugh, that pink is hideous")
+	end
 end
