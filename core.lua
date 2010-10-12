@@ -3,15 +3,10 @@ local util = ns.util
 
 local pinfo = {
   class = string.upper(select(2, UnitClass('player'))),
+  level = UnitLevel("player")
 }
 
 local __, _, _, tocversion = GetBuildInfo()
-
-if tocversion >= 40000 then
-	its_cataclysm_already = true
-else
-	its_cataclysm_already = false
-end
 
 local defaults = {
 	["SHAMAN"]  = {
@@ -40,14 +35,7 @@ local defaults = {
 	},
 }
 
-local reg_bd = {
-		bgFile = [[Interface\ChatFrame\ChatFrameBackground]],
-    edgeFile = [[Interface/Tooltips/UI-Tooltip-Border]],
-    tile = true, tileSize = 4, edgeSize = 4,
-    insets = { left = 1, right = 1, top = 1, bottom = 1 }
-}
-
-local bold_bd = {
+local backdrop = {
 		bgFile = [[Interface\ChatFrame\ChatFrameBackground]],
     edgeFile = [[Interface/Tooltips/UI-Tooltip-Border]],
     tile = true, tileSize = 4, edgeSize = 4,
@@ -83,7 +71,7 @@ function rCPFrame:Init()
 
 	if pinfo.class == "DRUID" or pinfo.class == "ROGUE" then
 		makeFrames(max_blip, red, green, blue, false)
-		updateVisuals(max_blip, util.currCP(), red, green, blue)
+		util.updateVisuals(max_blip, util.currCP(), red, green, blue)
 
 		rCPFrame:RegisterEvent("UNIT_COMBO_POINTS")
 		rCPFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -93,7 +81,7 @@ function rCPFrame:Init()
 			rCPFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 		end
 
-		if pinfo.class == "ROGUE" and its_cataclysm_already then
+		if pinfo.class == "ROGUE" then
 			if rPwrConf.dpstack == true then -- envenom counter
 				rCPFrame:RegisterEvent("UNIT_AURA")
 			end
@@ -108,41 +96,48 @@ function rCPFrame:Init()
 			if pinfo.class == "ROGUE" and event == "UNIT_AURA" then
 				if rPwrConf.dpstack == true and unit == "target" then
 					local count = util.currDP()
-					updateBorder(5, count, 0, 0, 0, 0, 1, 0)
+					util.updateBorder(5, count, 0, 0, 0, 0, 1, 0)
 				end
 			end
-			updateVisuals(max_blip, util.currCP(), red, green, blue)
-			local count = util.currDP()
-			updateBorder(5, count, 0, 0, 0, 0, 1, 0)
-			druidShowHide()
+
+			util.updateVisuals(max_blip, util.currCP(), red, green, blue)
+			
+			if pinfo.class == "ROGUE" then
+				local count = util.currDP()
+				util.updateBorder(5, count, 0, 0, 0, 0, 1, 0)
+			end
+
+			if pinfo.class == "DRUID" then
+				druidShowHide()
+			end
 		end)
 	end
 
-	if pinfo.class == "PALADIN" and its_cataclysm_already then
+	if pinfo.class == "PALADIN" then
 		max_blip, red, green, blue = initClass()
 
 		makeFrames(max_blip, red, green, blue, false)
-		updateVisuals(max_blip, util.currHolyPower(), red, green, blue)
+		util.updateVisuals(max_blip, util.currHolyPower(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_POWER")
 		rCPFrame:SetScript("OnEvent", function(self, event, unit, power)
 			if unit ~= "player" or power ~= "HOLY_POWER" then return end
-				updateVisuals(max_blip, util.currHolyPower(), red, green, blue)
+				util.updateVisuals(max_blip, util.currHolyPower(), red, green, blue)
 		end)
 	end
 
-	if pinfo.class == "WARLOCK" and its_cataclysm_already then
+	if pinfo.class == "WARLOCK" then
 		max_blip, red, green, blue = initClass()
 
 		makeFrames(max_blip, red, green, blue, false)
-		updateVisuals(max_blip, util.currShards(), red, green, blue)
+		util.updateVisuals(max_blip, util.currShards(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_POWER")
 		rCPFrame:RegisterEvent("PLAYER_ALIVE")
 		rCPFrame:SetScript("OnEvent", function(self, event, unit, power)
 		  if event == "PLAYER_ALIVE" then
-		    updateVisuals(max_blip, util.currShards(), red, green, blue)
+		    util.updateVisuals(max_blip, util.currShards(), red, green, blue)
 		  end
 			if unit ~= "player" or power ~= "SOUL_SHARDS" then return end
-			updateVisuals(max_blip, util.currShards(), red, green, blue)
+			util.updateVisuals(max_blip, util.currShards(), red, green, blue)
 		end)
 	end
 
@@ -163,7 +158,7 @@ function rCPFrame:Init()
 
 		makeFrames(6, red, green, blue, true)
 		shamanHideShow(rCPFrame.spec)
-		updateVisuals(max_blip, cFunc(), red, green, blue)
+		util.updateVisuals(max_blip, cFunc(), red, green, blue)
 		
 		rCPFrame:SetScript("OnEvent", function(self, event, unit)
 			if event == "ACTIVE_TALENT_GROUP_CHANGED" then
@@ -173,13 +168,13 @@ function rCPFrame:Init()
 			    cFunc = util.currMaelstrom
 			    max_blip = 5
 			    shamanHideShow(rCPFrame.spec)
-				  updateVisuals(max_blip, cFunc(), red, green, blue)
+				  util.updateVisuals(max_blip, cFunc(), red, green, blue)
         elseif rCPFrame.spec == 1 then
 			    rCPFrame:RegisterEvent("UNIT_AURA")
 			    cFunc = util.currLB
 			    max_blip = 6
 			    shamanHideShow(rCPFrame.spec)
-				  updateVisuals(max_blip, cFunc(), red, green, blue)			    
+				  util.updateVisuals(max_blip, cFunc(), red, green, blue)			    
 			  else
 			    rCPFrame:UnregisterEvent("UNIT_AURA")
 			    for i = 1, max_blip do
@@ -188,27 +183,27 @@ function rCPFrame:Init()
 			  end
 		  else
 		    if unit ~= "player" then return end
-			  updateVisuals(max_blip, cFunc(), red, green, blue)
+			  util.updateVisuals(max_blip, cFunc(), red, green, blue)
 			end
 		end)
 	end
 
-	if pinfo.class == "PRIEST" and its_cataclysm_already and GetPrimaryTalentTree() == 3 then
+	if pinfo.class == "PRIEST" and GetPrimaryTalentTree() == 3 then
 		max_blip, red, green, blue = initClass()
 
 		makeFrames(max_blip, red, green, blue, false)
-		updateVisuals(max_blip, util.currOrbs(), red, green, blue)
+		util.updateVisuals(max_blip, util.currOrbs(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_AURA")
 		rCPFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
 		rCPFrame:SetScript("OnEvent", function(self, event, unit)
 			if event == "UNIT_AURA" then
 				if unit ~= "player" then return end
-				updateVisuals(max_blip, util.currOrbs(), red, green, blue)
+				util.updateVisuals(max_blip, util.currOrbs(), red, green, blue)
 			elseif event == "ACTIVE_TALENT_GROUP_CHANGED" then
 				if GetPrimaryTalentTree() == 3 then
 					rCPFrame:RegisterEvent("UNIT_AURA")
 					priestShowHide(true)
-					updateVisuals(max_blip, util.currOrbs(), red, gree, blue)
+					util.updateVisuals(max_blip, util.currOrbs(), red, gree, blue)
 				else
 					rCPFrame:UnregisterEvent("UNIT_AURA")
 					priestShowHide(false)
@@ -222,7 +217,7 @@ function genFrame(red, green, blue, height, width)
 	local f = CreateFrame("Frame")
 	f:SetWidth(width)
 	f:SetHeight(height)
-	f:SetBackdrop(reg_bd)
+	f:SetBackdrop(backdrop)
 	f:SetBackdropColor(red,green,blue,0.5)
 	f:SetBackdropBorderColor(0,0,0,1)
 	f:Show()
@@ -281,7 +276,7 @@ local function kittyStance()
 end
 
 function druidShowHide()
-	if pinfo.class == "DRUID" and GetShapeshiftForm() ~= kittyStance() and util.currCP() == 0 then
+	if GetShapeshiftForm() ~= kittyStance() and util.currCP() == 0 then
 		for i = 1, 5 do
 			rCPFrame:UnregisterEvent("UNIT_AURA")
 			_G['powerframe'..i]:Hide()
@@ -321,28 +316,6 @@ function shamanHideShow(spec)
 end
 
 
-
-function updateVisuals(max, curr, red, green, blue)
-	for i = 1, max do
-		if i <= curr then
-			_G['powerframe'..i]:SetBackdropColor(red, green, blue,1)
-		else
-			_G['powerframe'..i]:SetBackdropColor(red, green, blue,0.1)
-		end
-
-	end
-end
-
-function updateBorder(max, curr, red, green, blue, redset, greenset, blueset)
-	for i = 1, max do
-		if i <= curr then
-			_G['powerframe'..i]:SetBackdropBorderColor(redset, greenset, blueset, 1)
-		else
-			_G['powerframe'..i]:SetBackdropBorderColor(red, green, blue, 1)
-		end
-	end
-end
-
 function ShowColorPicker(r, g, b, cback)
  ColorPickerFrame:SetColorRGB(r,g,b);
  ColorPickerFrame.previousValues = {r,g,b};
@@ -358,7 +331,7 @@ function colorCallback(bail)
 	else
 		red, green, blue = ColorPickerFrame:GetColorRGB();
 	end
-	updateVisuals(max_blip, max_blip, red, green, blue)
+	util.updateVisuals(max_blip, max_blip, red, green, blue)
 	rPwrConf.mycolors = { red, green, blue }
 end
 

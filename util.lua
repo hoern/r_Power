@@ -45,4 +45,24 @@ util.currLB = function()
 	return count - 3
 end
 
+util.updateBorder = function(max, curr, red, green, blue, redset, greenset, blueset)
+	for i = 1, max do
+		if i <= curr then
+			_G['powerframe'..i]:SetBackdropBorderColor(redset, greenset, blueset, 1)
+		else
+			_G['powerframe'..i]:SetBackdropBorderColor(red, green, blue, 1)
+		end
+	end
+end
+
+util.updateVisuals = function(max, curr, red, green, blue)
+	for i = 1, max do
+		if i <= curr then
+			_G['powerframe'..i]:SetBackdropColor(red, green, blue,1)
+		else
+			_G['powerframe'..i]:SetBackdropColor(red, green, blue,0.1)
+		end
+	end
+end
+
 ns.util = util
