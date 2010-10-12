@@ -1,3 +1,6 @@
+addon, ns = ...
+local util = ns.util
+
 local pinfo = {
   class = string.upper(select(2, UnitClass('player'))),
 }
@@ -80,7 +83,7 @@ function rCPFrame:Init()
 
 	if pinfo.class == "DRUID" or pinfo.class == "ROGUE" then
 		makeFrames(max_blip, red, green, blue, false)
-		updateVisuals(max_blip, currCP(), red, green, blue)
+		updateVisuals(max_blip, util.currCP(), red, green, blue)
 
 		rCPFrame:RegisterEvent("UNIT_COMBO_POINTS")
 		rCPFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -104,12 +107,12 @@ function rCPFrame:Init()
 
 			if pinfo.class == "ROGUE" and event == "UNIT_AURA" then
 				if rPwrConf.dpstack == true and unit == "target" then
-					local count = currDP()
+					local count = util.currDP()
 					updateBorder(5, count, 0, 0, 0, 0, 1, 0)
 				end
 			end
-			updateVisuals(max_blip, currCP(), red, green, blue)
-			local count = currDP()
+			updateVisuals(max_blip, util.currCP(), red, green, blue)
+			local count = util.currDP()
 			updateBorder(5, count, 0, 0, 0, 0, 1, 0)
 			druidShowHide()
 		end)
@@ -119,11 +122,11 @@ function rCPFrame:Init()
 		max_blip, red, green, blue = initClass()
 
 		makeFrames(max_blip, red, green, blue, false)
-		updateVisuals(max_blip, currHolyPower(), red, green, blue)
+		updateVisuals(max_blip, util.currHolyPower(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_POWER")
 		rCPFrame:SetScript("OnEvent", function(self, event, unit, power)
 			if unit ~= "player" or power ~= "HOLY_POWER" then return end
-				updateVisuals(max_blip, currHolyPower(), red, green, blue)
+				updateVisuals(max_blip, util.currHolyPower(), red, green, blue)
 		end)
 	end
 
@@ -131,11 +134,15 @@ function rCPFrame:Init()
 		max_blip, red, green, blue = initClass()
 
 		makeFrames(max_blip, red, green, blue, false)
-		updateVisuals(max_blip, currShards(), red, green, blue)
+		updateVisuals(max_blip, util.currShards(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_POWER")
+		rCPFrame:RegisterEvent("PLAYER_ALIVE")
 		rCPFrame:SetScript("OnEvent", function(self, event, unit, power)
+		  if event == "PLAYER_ALIVE" then
+		    updateVisuals(max_blip, util.currShards(), red, green, blue)
+		  end
 			if unit ~= "player" or power ~= "SOUL_SHARDS" then return end
-			updateVisuals(max_blip, currShards(), red, green, blue)
+			updateVisuals(max_blip, util.currShards(), red, green, blue)
 		end)
 	end
 
@@ -144,11 +151,11 @@ function rCPFrame:Init()
 		max_blip, red, green, blue = initClass()
 
     if rCPFrame.spec == 2 then
-      cFunc = currMaelstrom
+      cFunc = util.currMaelstrom
 		  rCPFrame:RegisterEvent("UNIT_AURA")
 		elseif rCPFrame.spec == 1 then
 		  rCPFrame:RegisterEvent("UNIT_AURA")
-		  cFunc = currLB
+		  cFunc = util.currLB
 		  max_blip = 6
 		end
 
@@ -163,13 +170,13 @@ function rCPFrame:Init()
 			  rCPFrame.spec = GetPrimaryTalentTree()
 			  if rCPFrame.spec == 2 then
 			    rCPFrame:RegisterEvent("UNIT_AURA")
-			    cFunc = currMaelstrom
+			    cFunc = util.currMaelstrom
 			    max_blip = 5
 			    shamanHideShow(rCPFrame.spec)
 				  updateVisuals(max_blip, cFunc(), red, green, blue)
         elseif rCPFrame.spec == 1 then
 			    rCPFrame:RegisterEvent("UNIT_AURA")
-			    cFunc = currLB
+			    cFunc = util.currLB
 			    max_blip = 6
 			    shamanHideShow(rCPFrame.spec)
 				  updateVisuals(max_blip, cFunc(), red, green, blue)			    
@@ -190,18 +197,18 @@ function rCPFrame:Init()
 		max_blip, red, green, blue = initClass()
 
 		makeFrames(max_blip, red, green, blue, false)
-		updateVisuals(max_blip, currOrbs(), red, green, blue)
+		updateVisuals(max_blip, util.currOrbs(), red, green, blue)
 		rCPFrame:RegisterEvent("UNIT_AURA")
 		rCPFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
 		rCPFrame:SetScript("OnEvent", function(self, event, unit)
 			if event == "UNIT_AURA" then
 				if unit ~= "player" then return end
-				updateVisuals(max_blip, currOrbs(), red, green, blue)
+				updateVisuals(max_blip, util.currOrbs(), red, green, blue)
 			elseif event == "ACTIVE_TALENT_GROUP_CHANGED" then
 				if GetPrimaryTalentTree() == 3 then
 					rCPFrame:RegisterEvent("UNIT_AURA")
 					priestShowHide(true)
-					updateVisuals(max_blip, currOrbs(), red, gree, blue)
+					updateVisuals(max_blip, util.currOrbs(), red, gree, blue)
 				else
 					rCPFrame:UnregisterEvent("UNIT_AURA")
 					priestShowHide(false)
@@ -274,7 +281,7 @@ local function kittyStance()
 end
 
 function druidShowHide()
-	if pinfo.class == "DRUID" and GetShapeshiftForm() ~= kittyStance() and currCP() == 0 then
+	if pinfo.class == "DRUID" and GetShapeshiftForm() ~= kittyStance() and util.currCP() == 0 then
 		for i = 1, 5 do
 			rCPFrame:UnregisterEvent("UNIT_AURA")
 			_G['powerframe'..i]:Hide()
@@ -313,48 +320,7 @@ function shamanHideShow(spec)
   end
 end
 
-function currLB()
-	local lb = GetSpellInfo(324)
-	local _, _, _, count, _, _, _, whodunnit = UnitAura("player", lb, nil, "HELPFUL")
-	if count == nil then return 0 end
-	if count < 3 then return 0 end
-	return count - 3
-end
 
-function currDP()
-	local dp = GetSpellInfo(72330)
-	local _, _, _, count, _, _, _, whodunnit = UnitAura("target", dp, nil, "HARMFUL")
-	if count == nil then return 0 end
-	return count
-end
-
-function currMaelstrom()
-	local msw = GetSpellInfo(53817)
-	local _, _, _, count, _, _, _, whodunnit = UnitAura("player", msw, nil, "HELPFUL")
-	if count == nil then return 0 end
-	if whodunnit == "player" then
-		return count
-	end
-end
-
-function currOrbs()
-	local orb = GetSpellInfo(77487)
-	local _, _, _, count, _, _, _, whodunnit = UnitAura("player", orb, nil, "HELPFUL")
-	if count == nil then return 0 end
-	return count
-end
-
-function currShards()
-	return UnitPower("player", SPELL_POWER_SOUL_SHARDS)
-end
-
-function currHolyPower()
-	return UnitPower("player", SPELL_POWER_HOLY_POWER)
-end
-
-function currCP()
-	return GetComboPoints("player")
-end
 
 function updateVisuals(max, curr, red, green, blue)
 	for i = 1, max do

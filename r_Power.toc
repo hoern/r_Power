@@ -3,4 +3,5 @@
 ## Description: Maelstrom, Combo, Shard, and Power Display
 ## SavedVariablesPerCharacter: rPwrConf
 
+util.lua
 core.lua
