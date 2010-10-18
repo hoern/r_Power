@@ -8,6 +8,7 @@ local pinfo = {
 
 local __, _, _, tocversion = GetBuildInfo()
 
+-- color definitions
 local defaults = {
 	["SHAMAN"]  = {
 		colors = { 0, 0, 1 },
@@ -34,6 +35,9 @@ local defaults = {
 		blips = 3,
 	},
 }
+
+-- if we don't have a color definition we don't need to carry on
+if util.tmisses(defaults, pinfo.class) then return end
 
 local backdrop = {
 		bgFile = [[Interface\ChatFrame\ChatFrameBackground]],
@@ -157,7 +161,7 @@ function rCPFrame:Init()
     rCPFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
 
 		makeFrames(6, red, green, blue, true)
-		shamanHideShow(rCPFrame.spec)
+		shamanShowHide(rCPFrame.spec)
 		util.updateVisuals(max_blip, cFunc(), red, green, blue)
 		
 		rCPFrame:SetScript("OnEvent", function(self, event, unit)
@@ -167,13 +171,13 @@ function rCPFrame:Init()
 			    rCPFrame:RegisterEvent("UNIT_AURA")
 			    cFunc = util.currMaelstrom
 			    max_blip = 5
-			    shamanHideShow(rCPFrame.spec)
+			    shamanShowHide(rCPFrame.spec)
 				  util.updateVisuals(max_blip, cFunc(), red, green, blue)
         elseif rCPFrame.spec == 1 then
 			    rCPFrame:RegisterEvent("UNIT_AURA")
 			    cFunc = util.currLB
 			    max_blip = 6
-			    shamanHideShow(rCPFrame.spec)
+			    shamanShowHide(rCPFrame.spec)
 				  util.updateVisuals(max_blip, cFunc(), red, green, blue)			    
 			  else
 			    rCPFrame:UnregisterEvent("UNIT_AURA")
@@ -189,6 +193,10 @@ function rCPFrame:Init()
 	end
 
 	if pinfo.class == "PRIEST" and GetPrimaryTalentTree() == 3 then
+		if pinfo.level < 80 then 
+			print("Priest in Shadow spec detected but not 80, yet. Disabling to preserve pristine power in perpetuum. Reload UI after hitting 80.")
+			return false
+		end
 		max_blip, red, green, blue = initClass()
 
 		makeFrames(max_blip, red, green, blue, false)
@@ -213,9 +221,9 @@ function rCPFrame:Init()
 	end
 end
 
-function genFrame(red, green, blue, height, width)
+genFrame = function(red, green, blue, height, width)
 	local f = CreateFrame("Frame")
-	f:SetWidth(width)
+	f:SetWidth(width * (rPwrConf.ratio or 1))
 	f:SetHeight(height)
 	f:SetBackdrop(backdrop)
 	f:SetBackdropColor(red,green,blue,0.5)
@@ -301,7 +309,7 @@ function priestShowHide(show)
 	end
 end
 
-function shamanHideShow(spec)
+function shamanShowHide(spec)
   if spec == 1 then
     for i = 1,6 do
       _G['powerframe'..i]:SetWidth(cfg_size * (5/6))
@@ -365,6 +373,14 @@ SlashCmdList["RP"] = function(str)
 		elseif msg == "reset" then
 			red, green, blue = unpack(defaults[pinfo.class]["colors"])
 			ShowColorPicker(red, green, blue, colorCallback)
+		end
+	elseif cmd == "ratio" then
+		ra = tonumber(msg)
+		if ra < 0.2 or ra > 10 then ra = 1 end
+		rPwrConf.ratio = ra
+		for i = 1,max_blip do
+			local p = _G['powerframe'..i]
+			p:SetWidth(rPwrConf.ratio * floor(p:GetHeight()))
 		end
 	else
 		print("|cFF006699ristretto|r Power")

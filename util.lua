@@ -2,6 +2,15 @@ addon, ns = ...
 
 util = CreateFrame("Frame")
 
+util.tmisses = function(tab, el)
+	for k, v in pairs(tab) do
+	  if k == el then
+	    return false
+	  end
+	end
+	return true
+end
+
 util.currDP = function()
 	local dp = GetSpellInfo(72330)
 	local _, _, _, count, _, _, _, whodunnit = UnitAura("target", dp, nil, "HARMFUL")
