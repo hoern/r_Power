@@ -160,10 +160,11 @@ function rCPFrame:Init()
 
     rCPFrame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
 
-		makeFrames(6, red, green, blue, true)
 		shamanShowHide(rCPFrame.spec)
-		util.updateVisuals(max_blip, cFunc(), red, green, blue)
-		
+		if rCPFrame.spec ~= 3 then
+			util.updateVisuals(max_blip, cFunc(), red, green, blue)
+		end
+
 		rCPFrame:SetScript("OnEvent", function(self, event, unit)
 			if event == "ACTIVE_TALENT_GROUP_CHANGED" then
 			  rCPFrame.spec = GetPrimaryTalentTree()
