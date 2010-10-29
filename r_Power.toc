@@ -1,7 +1,8 @@
 ## Interface: 40000
-## Title: |cFF006699ristretto|r Power
-## Description: Maelstrom, Combo, Shard, and Power Display
-## SavedVariablesPerCharacter: rPwrConf
+## Title: |cff006699ristretto|r Power 2
+## Notes: Caffeine for your UNIT_POWER
+## SavedVariablesPerCharacter: rpowerCfg
 
+cfg.lua
 util.lua
-core.lua
+power.lua
